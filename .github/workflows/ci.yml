@@ -1,0 +1,149 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+run-name: CI on ${{ github.head_ref || github.ref_name }}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  EXACT_COMMIT: 1aaab60736270d63f4e83982ef95a6094e91425d
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      unit: ${{ steps.filter.outputs.unit }}
+      app: ${{ steps.filter.outputs.app }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            unit:
+              - '.github/workflows/ci.yml'
+              - '.mise.toml'
+              - '**/*.ts'
+            app:
+              - '.github/workflows/ci.yml'
+              - '.mise.toml'
+              - 'app.contract'
+              - 'app.test.contract'
+              - 'app.json'
+              - 'package.json'
+              - 'exact.mjs'
+              - '**/*.ts'
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+
+  unit:
+    needs: changes
+    if: needs.changes.outputs.unit == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+
+      - name: Unit tests
+        run: bun test
+
+  # The web host only: Exact's own CI runs no Apple build, and the hosted macOS
+  # image does not necessarily carry the Xcode that Exact's Apple hosts need.
+  # The first web build is slow; rust-cache keeps what it compiles.
+  web:
+    needs: changes
+    if: needs.changes.outputs.app == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: rss-reader
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: rss-reader
+          persist-credentials: false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: expo/exact
+          ref: ${{ env.EXACT_COMMIT }}
+          path: exact
+          persist-credentials: false
+
+      - name: Rust (exact/rust-toolchain.toml)
+        working-directory: exact
+        run: rustup show active-toolchain || rustup toolchain install
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: exact
+          cache-on-failure: true
+
+      - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
+        id: chrome
+
+      - name: Exact SDK
+        working-directory: exact
+        env:
+          CHROME: ${{ steps.chrome.outputs.chrome-path }}
+        run: bun scripts/exact.mjs setup
+
+      - name: Compile the contract
+        env:
+          CHROME: ${{ steps.chrome.outputs.chrome-path }}
+        run: ./exact.mjs contract build app.contract --json --errors-only
+
+      - name: Test on the web host
+        env:
+          CHROME: ${{ steps.chrome.outputs.chrome-path }}
+        run: ./exact.mjs test web
+
+  # Single point of truth for branch protection
+  gate:
+    runs-on: ubuntu-latest
+    needs:
+      - changes
+      - lint
+      - unit
+      - web
+    if: always()
+    steps:
+      - name: Verify all required jobs succeeded
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        shell: bash
+        run: |
+          echo "One or more required jobs did not succeed."
+          exit 1
