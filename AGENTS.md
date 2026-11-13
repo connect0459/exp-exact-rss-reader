@@ -17,7 +17,9 @@ This project may be released publicly. All of the following must be written in *
 ## Project Structure
 
 - **`app.contract`** — the view and every declaration: `shape`, `state`, `resource`, `mutation`, `action`, `routes`. Two tabs: a reader (feed switcher, entry list, entry detail) and a starred list.
-- **`app.ts`** — the data module. It answers each declared `resource`/`mutation` by name. The fixture feed (fixed RSS text) sits behind a `fetchFeed(url)` boundary, so swapping in a real `net.fetch` changes this file only. Read and starred state persist in `app:/data/state.json`.
+- **`app.ts`** — the data module. It answers each declared `resource`/`mutation` by name and keeps read ids, starred entries, and added feeds in `app:/data/state.json`. Its `grants` admit only `fs` on that file and `net.fetch https://zenn.dev`.
+- **`source.ts`** — `fetchFeed(url)`, the only place that knows where feed text comes from: `example.com` URLs read `fixtures.ts` so tests never leave the process, every other address goes through `net.fetch`.
+- **`rss.ts`, `entryId.ts`, `feedId.ts`** — pure helpers with `bun test` suites: an RSS 2.0 parser, route-safe entry ids from guids, and feed ids from addresses.
 - **`app.test.contract`** — the tests. The driver owns the clock; there is no real-time waiting.
 - **`app.json`** — the manifest.
 - **`docs/todo.md`** — the decision log: what's been verified, what broke, and why. Read it before changing the contract or the data module's boundary.
@@ -45,7 +47,7 @@ For local quality verification:
 ### Red/Green TDD (Detroit school)
 
 - Red → Green → Refactor cycle strictly followed
-- Use real objects; mocks are only permitted at external boundaries (file system, external API, network). The fixture feed behind `fetchFeed(url)` stands in for the network, which is that external boundary
+- Use real objects; mocks are only permitted at external boundaries (file system, external API, network). The `example.com` fixtures behind `fetchFeed(url)` stand in for the network, which is that external boundary
 - Write tests BEFORE implementation; run tests AFTER implementation
 - Coverage targets are agreed with the user before implementation and recorded in `docs/todo.md`
 - Exception: exploratory spikes may skip test-first with explicit user agreement; discard or rewrite the spike as a proper implementation afterward
