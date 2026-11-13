@@ -80,10 +80,24 @@ test "a feed that fails says so, and retrying asks its source again"
     clock data
   expect perf query entries == 1
   expect tree has "retry"
+
+test "choosing a working feed after a failure lists its entries again"
+  tap "feed-broken"
+  clock data
+  expect tree has "retry"
   tap "feed-alpha"
   clock data
   expect tree missing "retry"
   expect tree has "entry-a1"
+
+test "an address with no feed is refused with a reason, and the sheet stays open"
+  tap "add-feed"
+  clock settle
+  type "add-feed-url" "https://example.com/nowhere.xml"
+  tap "add-feed-save"
+  clock data
+  expect text "add-feed-error" == "No feed was found at that address."
+  expect tree has "add-feed-url"
 
 test "an address with no feed is refused with a reason, and a real one becomes a feed to read"
   tap "add-feed"
