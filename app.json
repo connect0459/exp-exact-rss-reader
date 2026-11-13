@@ -1,0 +1,20 @@
+{
+  "$schema": "../exact/scripts/app.schema.json",
+  "name": "Rss Reader",
+  "short_name": "Rss Reader",
+  "id": "com.example.rss-reader-bfd7e1",
+  "start_url": "/",
+  "display": "standalone",
+  "app": {
+    "id": "com.example.rss-reader-bfd7e1",
+    "name": "Rss Reader"
+  },
+  "host": {
+    "web": {}
+  },
+  "deploy": {
+    "store": {
+      "web": "0"
+    }
+  }
+}
