@@ -164,7 +164,6 @@ Observations from setting up and using Exact, recorded because they cost time an
 
 - Whether a reader that can subscribe to any feed is worth widening `grants` to `net.fetch https:`. It is the natural feature and the opposite of the narrow-grant story.
 - Whether the web host should be able to read a feed at all, given CORS; a proxy would add a server this repository does not otherwise have.
-- Private vulnerability reporting is not enabled here, although `SECURITY.md` directs reporters to it: enable it, or change what `SECURITY.md` asks them to do.
 - What the starred snapshots should do when an entry's feed later changes it or drops it. Today a snapshot keeps the text it had when starred, and the reader's list shows the live text.
 - Whether `selectedFeed`'s default (`"alpha"`, the first fixture feed) should come from the feed list instead. It is a literal now because a `resource` argument must be known before `feeds` has loaded.
 - Whether the tab bar's icons should align: the Reader tab, which holds a label row, sits a few pixels higher than the Starred tab. Not a counted finding.
