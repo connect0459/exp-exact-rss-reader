@@ -1,10 +1,12 @@
 import type { Answer, Result, Sources, Storage } from './app.contract.d.ts';
+import { entryIdOf } from './entryId.ts';
+import { feedIdOf } from './feedId.ts';
 import { INITIAL_FEEDS } from './fixtures.ts';
 import { parseFeed } from './rss.ts';
 import { fetchFeed } from './source.ts';
 
 const FILE = 'app:/data/state.json';
-export const grants = [`fs.read ${FILE}`, `fs.write ${FILE}`].join('\n');
+export const grants = [`fs.read ${FILE}`, `fs.write ${FILE}`, 'net.fetch https://zenn.dev'].join('\n');
 
 type Feed = Result<'loadFeeds'>[number];
 type Article = Result<'loadEntries'>[number];
@@ -35,11 +37,6 @@ async function save(storage: Storage, current: State): Promise<Reply> {
 
 const feedsOf = (current: State): Feed[] => [...INITIAL_FEEDS, ...current.added];
 
-const idOf = (url: string): string => {
-  const last = url.split('?')[0].split('/').filter(Boolean).pop() ?? url;
-  return last.replace(/\.[a-z0-9]+$/i, '');
-};
-
 const byNewest = (a: Saved, b: Saved): number => Date.parse(b.published) - Date.parse(a.published);
 
 const sources: Sources = {
@@ -54,9 +51,10 @@ const sources: Sources = {
     const read = new Set(current.read);
     return parsed.entries
       .map((e) => {
-        const saved: Saved = { id: e.id, feedId, title: e.title, summary: e.summary, link: e.link, published: e.published };
-        seen.set(e.id, saved);
-        return { ...saved, publishedMs: e.publishedMs, read: read.has(e.id), starred: starred.has(e.id) };
+        const id = entryIdOf(e.id);
+        const saved: Saved = { id, feedId, title: e.title, summary: e.summary, link: e.link, published: e.published };
+        seen.set(id, saved);
+        return { ...saved, publishedMs: e.publishedMs, read: read.has(id), starred: starred.has(id) };
       })
       .sort((a, b) => b.publishedMs - a.publishedMs)
       .map(({ publishedMs: _drop, ...article }) => article);
@@ -90,7 +88,7 @@ const sources: Sources = {
 
   subscribe: async ([url], _store, storage) => {
     const current = await load(storage);
-    const id = idOf(url);
+    const id = feedIdOf(url);
     const existing = feedsOf(current).find((f) => f.id === id || f.url === url);
     if (existing) return { ok: false, error: `Already subscribed to ${existing.title}.` };
     let title: string;

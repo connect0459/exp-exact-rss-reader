@@ -9,7 +9,8 @@ const item = (guid: string, title: string, pubDate: string, description: string)
 export const INITIAL_FEEDS: FixtureFeed[] = [
   { id: 'alpha', title: 'Alpha Dispatch', url: 'https://example.com/alpha.xml' },
   { id: 'beta', title: 'Beta Weekly', url: 'https://example.com/beta.xml' },
-  { id: 'broken', title: 'Broken Feed', url: 'https://example.com/broken.xml' },
+  { id: 'delta', title: 'Delta Digest', url: 'https://example.com/delta.xml' },
+  { id: 'zenn', title: 'Zenn', url: 'https://zenn.dev/connect0459/feed' },
 ];
 
 export const FIXTURE_FEEDS: Record<string, string> = {
@@ -21,6 +22,10 @@ export const FIXTURE_FEEDS: Record<string, string> = {
   'https://example.com/beta.xml': rss('Beta Weekly', [
     item('b1', 'Beta one', 'Fri, 06 Nov 2026 09:00:00 GMT', 'The first beta post.'),
     item('b2', 'Beta two', 'Sat, 07 Nov 2026 09:00:00 GMT', '<![CDATA[<p>The second beta post.</p>]]>'),
+  ]),
+  'https://example.com/delta.xml': rss('Delta Digest', [
+    item('https://example.com/posts/d2', 'Delta two', 'Tue, 10 Nov 2026 09:00:00 GMT', 'The second delta post.'),
+    item('https://example.com/posts/d1', 'Delta one', 'Mon, 09 Nov 2026 09:00:00 GMT', 'The first delta post.'),
   ]),
   'https://example.com/gamma.xml': rss('Gamma Gazette', [
     item('g1', 'Gamma one', 'Sun, 08 Nov 2026 09:00:00 GMT', 'The only gamma post.'),
