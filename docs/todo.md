@@ -39,7 +39,7 @@ The goal is to exercise that claim with an app whose data is genuinely read and 
 - [x] Install the pre-commit hooks: `pre-commit`'s default Node resolved to a pre-release whose version string `nodeenv` could not parse (`0-alpha`), so markdownlint's environment never built; `language_version: lts`, as in the other repositories, fixed it, and the hooks now run on every commit
 - [x] Create the public GitHub repository and push (`connect0459/exp-exact-rss-reader`, renamed from `rss-reader` before the first pull request)
 - [x] CI (`.github/workflows/ci.yml`, dependabot for its actions): lint through pre-commit, the unit tests, and the web host's contract compile and tests behind a path filter, with a `gate` job. macOS and iOS are not in CI: Exact's own CI runs no Apple build, and the hosted image's Xcode is unconfirmed
-- [ ] Set `app.name` and `app.id` in `app.json` — `exact new` generated the placeholder `com.example.rss-reader-bfd7e1`, and Exact requires both to be set before building
+- [ ] Set `app.name` and `app.id` in `app.json` — `exact new` generated a placeholder id (now `com.example.exp-exact-rss-reader-bfd7e1`), and Exact requires both to be set before building
 
 ## Milestone 1: Tests first (Red)
 
@@ -154,14 +154,18 @@ Observations from setting up and using Exact, recorded because they cost time an
 - **A finding's remedy can be right for one scheme and wrong for the other.** `verify` named a role for the dark-only contrast failure; the role then failed in light. Reading both schemes in the next run, not trusting the first fix, is part of the loop.
 - **The property search delivers only part of the tests.** `contract verify` replayed 4 of the 8 eligible tests whole and stopped the others at `perf` or `reload`, which its synchronous world does not deliver; `fail fetch`, `request`, `back`, and `expect refusal` are also undeliverable. The seven properties it proposed are therefore about the actions it could drive (`pickFeed`, `pickTab`, `openAdd`, `cancelAdd`, `editUrl`, `saveFeed`, and the clock), not about `toggleStar` or `follow`.
 - **A rebuilt web plan takes seconds.** After the first ten-minute build, `verify` rebuilt the web app in 2 to 5 seconds and the whole run took about 34 seconds.
-- **Exact has to sit beside the app, not inside it.** `exact.mjs` finds the checkout at `../exact`. In CI both repositories are checked out into sibling directories of the workspace (`rss-reader/`, `exact/`), because `actions/checkout` cannot place a path outside the workspace and a nested checkout would put Exact's own `.contract` and TypeScript files under the app's directory.
+- **Exact has to sit beside the app, not inside it.** `exact.mjs` finds the checkout at `../exact`. In CI both repositories are checked out into sibling directories of the workspace (`exp-exact-rss-reader/`, `exact/`), because `actions/checkout` cannot place a path outside the workspace and a nested checkout would put Exact's own `.contract` and TypeScript files under the app's directory.
 - **`contract build` generates `app.contract.d.ts` and fails on an error.** A fresh clone has no generated types, and no separate type step is needed before the compile or the tests; the exit code is 1 when a diagnostic is an error, for `contract build` and for `test web`.
 - **Exact's own CI shows what a hosted runner cannot do.** Its tests run in a separate workflow because the hosted runner takes over an hour, and its CI runs no Apple build. Its Linux job gets Chrome from `setup-chrome` and passes the path in `CHROME`, so `exact setup` downloads no Playwright Chromium; this workflow does the same.
+- **The first CI run on a hosted runner passed.** Every job succeeded on the pull request, and the `web` job took 6 minutes 53 seconds from a cold cache, well inside its 60-minute limit; `setup-chrome` with `exact setup` needed no Playwright download. Confirmed in the repository this one replaced, with the same workflow.
+- **Private vulnerability reporting is off in every repository.** All thirteen other public repositories report it disabled, including the eleven whose `SECURITY.md` tells reporters to use it, so an outside reporter has no private channel in any of them. This repository follows that convention and is no worse than the others.
+- **The repository was recreated before its first merge.** A screenshot and two test strings carried a company name; the branch history was rewritten, but GitHub kept serving the old objects by SHA after a force push, so the work moved to a fresh repository and the old one was deleted. Nothing had been merged, so nothing was lost but the first pull request and CI history.
 
 ## Open questions
 
 - Whether a reader that can subscribe to any feed is worth widening `grants` to `net.fetch https:`. It is the natural feature and the opposite of the narrow-grant story.
 - Whether the web host should be able to read a feed at all, given CORS; a proxy would add a server this repository does not otherwise have.
+- Whether to enable private vulnerability reporting here and in the other repositories, or to change what `SECURITY.md` asks reporters to do.
 - What the starred snapshots should do when an entry's feed later changes it or drops it. Today a snapshot keeps the text it had when starred, and the reader's list shows the live text.
 - Whether `selectedFeed`'s default (`"alpha"`, the first fixture feed) should come from the feed list instead. It is a literal now because a `resource` argument must be known before `feeds` has loaded.
 - Whether the tab bar's icons should align: the Reader tab, which holds a label row, sits a few pixels higher than the Starred tab. Not a counted finding.
