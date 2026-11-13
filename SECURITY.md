@@ -16,7 +16,7 @@ Only the `main` branch is maintained. There are no tagged releases.
 
 Use GitHub's [private vulnerability reporting][private-report] feature to disclose issues confidentially. You will receive an acknowledgment within **5 business days** and a resolution timeline once the report has been triaged.
 
-[private-report]: https://github.com/connect0459/rss-reader/security/advisories/new
+[private-report]: https://github.com/connect0459/exp-exact-rss-reader/security/advisories/new
 
 ## Scope
 

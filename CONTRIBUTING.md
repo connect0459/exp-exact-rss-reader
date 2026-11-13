@@ -11,8 +11,8 @@
 ## Setup
 
 ```sh
-git clone https://github.com/connect0459/rss-reader
-cd rss-reader
+git clone https://github.com/connect0459/exp-exact-rss-reader
+cd exp-exact-rss-reader
 just setup
 ```
 

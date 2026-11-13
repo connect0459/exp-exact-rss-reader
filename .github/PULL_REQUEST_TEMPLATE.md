@@ -5,9 +5,9 @@
 ## Related Links
 
 - Issues
-  - <!-- <https://github.com/connect0459/rss-reader/issues/xxx> -->
+  - <!-- <https://github.com/connect0459/exp-exact-rss-reader/issues/xxx> -->
 - PRs
-  - <!-- <https://github.com/connect0459/rss-reader/pull/xxx> -->
+  - <!-- <https://github.com/connect0459/exp-exact-rss-reader/pull/xxx> -->
 
 ## [Required] Overview
 

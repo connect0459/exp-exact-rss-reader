@@ -1,7 +1,7 @@
-# rss-reader
+# exp-exact-rss-reader
 
-[![CI](https://github.com/connect0459/rss-reader/actions/workflows/ci.yml/badge.svg)](https://github.com/connect0459/rss-reader/actions/workflows/ci.yml)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://github.com/connect0459/rss-reader/blob/main/LICENSE)
+[![CI](https://github.com/connect0459/exp-exact-rss-reader/actions/workflows/ci.yml/badge.svg)](https://github.com/connect0459/exp-exact-rss-reader/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://github.com/connect0459/exp-exact-rss-reader/blob/main/LICENSE)
 [![Built with Exact](https://img.shields.io/badge/built%20with-Exact-black.svg)](https://github.com/expo/exact)
 [![Hosts: web | macOS | iOS](https://img.shields.io/badge/hosts-web%20%7C%20macOS%20%7C%20iOS-lightgrey.svg)](#compatibility)
 
@@ -14,7 +14,7 @@ A small RSS reader written as a trial of [Exact](https://github.com/expo/exact),
 
 The article ["Expo Exact first impression"](https://zenn.dev/tellernovel_inc/articles/expo-exact-first-impression) claims that the data a screen depends on can be declared (`resource`, `mutation ... refreshes`, `grants`) instead of fetched imperatively, which makes the dependencies checkable and the tests deterministic.
 
-This project tests that claim on an app whose data is genuinely read and written. It is not a product and not a general RSS engine; the findings it produced are the point, and they are recorded in [docs/todo.md](https://github.com/connect0459/rss-reader/blob/main/docs/todo.md).
+This project tests that claim on an app whose data is genuinely read and written. It is not a product and not a general RSS engine; the findings it produced are the point, and they are recorded in [docs/todo.md](https://github.com/connect0459/exp-exact-rss-reader/blob/main/docs/todo.md).
 
 ## Features
 
@@ -35,8 +35,8 @@ cd exact
 bun scripts/exact.mjs setup
 cd ..
 
-git clone https://github.com/connect0459/rss-reader
-cd rss-reader
+git clone https://github.com/connect0459/exp-exact-rss-reader
+cd exp-exact-rss-reader
 just setup
 ```
 
@@ -87,13 +87,13 @@ Building for macOS and iOS needs Xcode 27.1 or later. When the selected Xcode is
 
 ## Documentation
 
-- [docs/todo.md](https://github.com/connect0459/rss-reader/blob/main/docs/todo.md) — the decision log: what each milestone verified, what broke, and why. Start here for the findings about Exact.
-- [AGENTS.md](https://github.com/connect0459/rss-reader/blob/main/AGENTS.md) — the guide for coding agents: structure, Exact conventions, development philosophy, and git conventions.
+- [docs/todo.md](https://github.com/connect0459/exp-exact-rss-reader/blob/main/docs/todo.md) — the decision log: what each milestone verified, what broke, and why. Start here for the findings about Exact.
+- [AGENTS.md](https://github.com/connect0459/exp-exact-rss-reader/blob/main/AGENTS.md) — the guide for coding agents: structure, Exact conventions, development philosophy, and git conventions.
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/connect0459/rss-reader/blob/main/CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/connect0459/exp-exact-rss-reader/blob/main/CONTRIBUTING.md).
 
 ## License
 
-[Apache-2.0](https://github.com/connect0459/rss-reader/blob/main/LICENSE)
+[Apache-2.0](https://github.com/connect0459/exp-exact-rss-reader/blob/main/LICENSE)
