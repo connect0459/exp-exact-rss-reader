@@ -44,13 +44,15 @@ The goal is to exercise that claim with an app whose data is genuinely read and 
 Goal: specify the RSS reader in `app.test.contract` before touching `app.contract` or `app.ts`.
 
 - [x] Agree coverage targets with the maintainer and record them above
-- [ ] Entry list shows the selected feed's entries from the fixture
-- [ ] Switching the feed refetches the entries (the `resource` argument changes)
-- [ ] Opening an entry marks it read, and the read state survives a relaunch
-- [ ] Starring an entry shows it in the starred tab, and unstarring removes it (one `mutation`, two tabs)
-- [ ] The reader tab keeps its pushed detail while the starred tab is in use (independent stacks)
-- [ ] A feed whose fetch fails shows a failure state with a retry, in place of the list
-- [ ] Confirm every new test fails for the right reason before moving on
+- [x] Entry list shows the selected feed's entries from the fixture, newest first
+- [x] Switching the feed refetches the entries once (the `resource` argument changes; `expect perf query entries == 1`)
+- [x] Opening an entry marks it read, and the read state survives a relaunch
+- [x] Starring an entry shows it in the starred tab and survives a relaunch; unstarring from the starred tab clears the reader's row too
+- [x] One star mutation refreshes `entries` and `starred` once each and leaves `feeds` alone (`expect perf query`)
+- [x] The reader tab keeps its pushed detail while the starred tab is in use (independent stacks)
+- [x] A feed whose fetch fails shows a failure state with a retry, in place of the list
+- [x] Adding a feed by address refuses an unknown address with a reason, and a known one becomes selectable
+- [x] Confirm every new test fails for the right reason before moving on: all nine fail against the untouched `list-detail` app on names that do not exist yet (`no state named "entries"`, `no view matches feed-beta`). The `perf` assertions sit behind earlier steps that fail first, so their counts are only proven at Green
 
 ## Milestone 2: Contract and data module (Green)
 
@@ -91,6 +93,9 @@ Observations from setting up and using Exact, recorded because they cost time an
 - **`exact update` leaves content outside the generated `AGENTS.md` block alone.** Verified: only the lines inside `exact:begin`/`exact:end` changed.
 - **`mise use` wrote to the global config.** `mise use bun@1.4.2` tried to write `~/.config/mise/config.toml` and failed; a hand-written local `mise.toml` plus `mise install` worked. The cause was not investigated.
 - **`apps/hello` has no tests.** It cannot be used for `test web`; `caltrain` can.
+- **`contract build` does not look at the test file.** Tests are compiled by `test`, so a test that names a missing state or `testId` surfaces only when the test runs, as `no state named "entries"` or `no view matches <id>`, not as a compile diagnostic.
+- **`expect perf query <resource>` counts how often a resource's data source was asked.** It makes "this declaration refreshes exactly these resources" a test, which is the claim the article's `refreshes` rests on. `perf` blocks refuse `clock … real`.
+- **`fail fetch` reaches only `net.fetch`.** With the fixture feed there is no fetch, so the failing-feed test relies on a fixture URL that makes the data module throw instead. Separately, `expect no failures` treats a refused resource as unarranged unless `fail fetch` fired, so the failing-feed test cannot use it, and `verify` counts such failures as findings (to be checked at Milestone 3).
 
 ## Open questions
 
