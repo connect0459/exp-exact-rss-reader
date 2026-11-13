@@ -2,11 +2,11 @@
   "$schema": "../exact/scripts/app.schema.json",
   "name": "Rss Reader",
   "short_name": "Rss Reader",
-  "id": "com.example.rss-reader-bfd7e1",
+  "id": "com.example.exp-exact-rss-reader-bfd7e1",
   "start_url": "/",
   "display": "standalone",
   "app": {
-    "id": "com.example.rss-reader-bfd7e1",
+    "id": "com.example.exp-exact-rss-reader-bfd7e1",
     "name": "Rss Reader"
   },
   "host": {
