@@ -1,163 +1,95 @@
-test "Save waits for a title, a refusal stays until a Save succeeds, an item opens and deletes after asking"
-  clock data
-  expect tree has "empty-add"
-  tap "empty-add"
-  clock settle
-  expect disabled "add-save"
-  expect text "add-hint" == "Enter a title to save."
-  type "add-title" "Milk"
-  expect enabled "add-save"
-  expect text "add-hint" == ""
-  type "add-notes" "Two litres"
-  tap "add-save"
-  clock data
-  clock settle
-  expect state lib.0 .title == "Milk"
-  tap "add-item"
-  clock settle
-  expect tree missing "add-error"
-  type "add-title" "milk"
-  tap "add-save"
-  clock data
-  expect text "add-error" == "There’s already an item called Milk. Choose another title."
-  expect text "add-title" == "milk"
-  type "add-title" "Oat milk"
-  expect text "add-error" == "There’s already an item called Milk. Choose another title."
-  tap "add-save"
-  clock data
-  clock settle
-  expect state lib.0 .title == "Oat milk"
-  tap "add-item"
-  clock settle
-  expect tree missing "add-error"
-  tap "add-cancel"
-  clock settle
-  tap "item-1"
-  clock settle
-  expect text "detail-notes" == "Two litres"
-  tap "delete-item"
-  clock settle
-  tap "remove-confirm"
-  clock settle
-  clock data
-  expect state lib.0 .title == "Oat milk"
-  expect tree missing "item-1"
+test "the reader opens on the first feed with its entries, newest first"
+  expect state entries.0 .id == "a3"
+  expect state entries.2 .id == "a1"
+  expect tree has "entry-a1"
+  expect state unread == 3
 
-test "the bar's search filters as you type; no match says so"
-  tap "add-item"
-  clock settle
-  type "add-title" "Bread"
-  type "add-notes" "Sourdough"
-  tap "add-save"
-  clock data
-  clock settle
-  tap "add-item"
-  clock settle
-  type "add-title" "Cherries"
-  tap "add-save"
-  clock data
-  clock settle
-  type "search" "sour"
-  expect tree has "item-1"
-  expect tree missing "item-2"
-  type "search" "plums"
-  expect tree missing "item-1"
-  expect state shown == []
-  type "search" ""
-  expect tree has "item-2"
+test "choosing another feed lists its entries and asks the source once"
+  perf
+    tap "feed-beta"
+    clock data
+  expect perf query entries == 1
+  expect state entries.0 .id == "b2"
+  expect tree missing "entry-a1"
+  expect tree has "entry-b1"
 
-test "the items survive a relaunch, newest first"
-  tap "add-item"
+test "opening an entry marks it read, and it stays read after a relaunch"
+  tap "entry-a1"
   clock settle
-  type "add-title" "Bread"
-  tap "add-save"
   clock data
-  clock settle
-  tap "add-item"
-  clock settle
-  type "add-title" "Cherries"
-  tap "add-save"
-  clock data
-  clock settle
+  expect text "detail-title-reader" == "Alpha one"
+  expect state unread == 2
   reload
-  expect state lib.0 .title == "Cherries"
-  expect state lib.1 .title == "Bread"
+  expect state unread == 2
 
-test "a wide window opens an item, beside the list on the web"
-  size 1000x700
-  tap "add-item"
+test "a starred entry is listed under Starred and stays starred after a relaunch"
+  tap "entry-a2"
   clock settle
-  type "add-title" "Eggs"
-  type "add-notes" "A dozen"
-  tap "add-save"
+  tap "star-reader"
   clock data
-  clock settle
-  tap "item-1"
-  clock settle
-  expect text "detail-title" == "Eggs"
-  expect text "detail-notes" == "A dozen"
-  expect state selected == "1"
+  reload
+  expect state starred.0 .id == "a2"
+  tap "tab-starred"
+  expect tree has "starred-a2"
 
-test "a locked item shows its badge, and Delete is disabled, saying why"
-  tap "add-item"
+test "unstarring from the Starred tab clears the star on the reader's list too"
+  tap "entry-a2"
   clock settle
-  type "add-title" "Eggs"
-  tap "add-save"
+  tap "star-reader"
   clock data
+  tap "tab-starred"
+  tap "starred-a2"
   clock settle
-  tap "item-1"
-  clock settle
-  expect text "delete-reason" == ""
-  type "lock-item" "true"
+  tap "star-starred"
   clock data
-  expect state lib.0 .locked == true
-  expect text "delete-reason" == "Unlock this item to delete it."
-  type "lock-item" "false"
-  clock data
-  expect state lib.0 .locked == false
+  expect state starred == []
+  expect state entries.1 .starred == false
 
-test "an id that names nothing says so, and Back returns to the list"
-  clock data
-  type "app" "/item/999"
+test "starring asks both lists again and leaves the feed list alone"
+  tap "entry-a2"
   clock settle
-  expect text "detail-title" == "Not Found"
-  expect tree has "missing-back"
-  tap "missing-back"
-  clock settle
-  expect tree has "add-item"
-  expect tree missing "missing-back"
+  perf
+    tap "star-reader"
+    clock data
+  expect perf query entries == 1
+  expect perf query starred == 1
+  expect perf query feeds == 0
 
-test "a row deletes by swipe without asking, and its long-press menu locks it"
-  tap "add-item"
+test "the reader tab keeps its open entry while the Starred tab is in use"
+  tap "entry-a1"
   clock settle
-  type "add-title" "Eggs"
-  tap "add-save"
-  clock data
-  clock settle
-  tap "item-1" contextmenu
-  tap "menu-lock"
-  clock data
-  expect state lib.0 .locked == true
-  expect disabled "item-1-delete"
-  tap "item-1" contextmenu
-  tap "menu-lock"
-  clock data
-  expect state lib.0 .locked == false
-  tap "item-1-delete"
-  clock data
-  expect state lib == []
-  expect tree has "add-item"
+  tap "tab-starred"
+  expect state nav.tab == "starred"
+  tap "tab-reader"
+  expect tree has "detail-title-reader"
 
-test "Enter in the title saves, as a form does"
+test "a feed that fails says so, and retrying asks its source again"
+  tap "feed-broken"
   clock data
-  tap "empty-add"
+  expect tree has "retry"
+  expect tree missing "entry-a1"
+  perf
+    tap "retry"
+    clock data
+  expect perf query entries == 1
+  expect tree has "retry"
+  tap "feed-alpha"
+  clock data
+  expect tree missing "retry"
+  expect tree has "entry-a1"
+
+test "an address with no feed is refused with a reason, and a real one becomes a feed to read"
+  tap "add-feed"
   clock settle
-  type "add-title" key "Enter"
+  type "add-feed-url" "https://example.com/nowhere.xml"
+  tap "add-feed-save"
   clock data
-  expect state lib.length == 0
-  type "add-title" "Pears"
-  type "add-title" key "Enter"
+  expect text "add-feed-error" == "No feed was found at that address."
+  type "add-feed-url" "https://example.com/gamma.xml"
+  tap "add-feed-save"
   clock data
   clock settle
-  expect state lib.0 .title == "Pears"
-  expect tree missing "add-title"
+  expect tree has "feed-gamma"
+  tap "feed-gamma"
+  clock data
+  expect state entries.0 .id == "g1"
