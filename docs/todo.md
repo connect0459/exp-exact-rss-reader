@@ -17,7 +17,10 @@ The goal is to exercise that claim with an app whose data is genuinely read and 
 - **Two tabs, not one list.** A reader tab (feed switcher, entry list, entry detail) and a starred tab. The tabs are split by kind of view, not by feed: a tab per feed would enumerate instances of one kind, which a switcher expresses better. The split exercises two independent navigation stacks, the `resource` argument change on feed switching, and `toggleStar` refreshing both tabs from one declaration.
 - **Feedback to Expo stays local.** `AGENTS.md` asks agents to record friction with `feedback note`. The send mode is `ask`; nothing is sent without the maintainer's explicit approval.
 - **Language, git conventions, and Development Philosophy are copied from `mbt-dodge-kmp`**, with project-specific lines (coverage targets, domain wording) adapted. `AGENTS.md` keeps Exact's generated block untouched and outside markdownlint's reach, because `exact update` rewrites it.
-- **Coverage targets: not yet agreed.** To be agreed with the maintainer before Milestone 2 starts; record the result here.
+- **Coverage targets, agreed with the maintainer before implementation:**
+  - `app.test.contract` covers every path that the article's claims rest on: the `resource` re-read when its argument changes (feed switching), the `refreshes` ripple (one star mutation reflected in both tabs), the failure path (a failed fetch and its retry), and state kept across a relaunch.
+  - The visual layer (light/dark, widths, text size, contrast) is left to `exact verify`, not to hand-written tests.
+  - The fixture RSS parser is not a coverage target; it is revisited when a real feed replaces the fixture (Milestone 5).
 
 ## Milestone 0: Environment and community standard files
 
@@ -31,7 +34,7 @@ The goal is to exercise that claim with an app whose data is genuinely read and 
 - [x] Community standard files: `LICENSE` (Apache-2.0), `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `SECURITY.md`, PR and issue templates, `dependabot.yml`
 - [x] Agent guide: `AGENTS.md` (`CLAUDE.md` is a symlink)
 - [x] Quality gates: pre-commit hooks (markdownlint), `justfile`
-- [ ] Verify the pre-commit hooks on the first commit (`pre-commit install` has not been run in this repository)
+- [ ] Verify the pre-commit hooks (`pre-commit install` has not been run, and `pre-commit`'s Node environment failed to build on this machine: `nodeenv` cannot parse the Node version `0-alpha`; the first six commits were made without the hooks, with markdownlint run through `bunx markdownlint-cli2@0.23.2` instead)
 - [ ] Create the GitHub repository and push — `connect0459/rss-reader`; a separate, explicit decision
 - [ ] CI — deliberately not added yet: a web test needs the Exact checkout, `exact setup`, and a ten-minute first build, so the workflow needs its own design
 - [ ] Set `app.name` and `app.id` in `app.json` — `exact new` generated the placeholder `com.example.rss-reader-bfd7e1`, and Exact requires both to be set before building
@@ -40,7 +43,7 @@ The goal is to exercise that claim with an app whose data is genuinely read and 
 
 Goal: specify the RSS reader in `app.test.contract` before touching `app.contract` or `app.ts`.
 
-- [ ] Agree coverage targets with the maintainer and record them above
+- [x] Agree coverage targets with the maintainer and record them above
 - [ ] Entry list shows the selected feed's entries from the fixture
 - [ ] Switching the feed refetches the entries (the `resource` argument changes)
 - [ ] Opening an entry marks it read, and the read state survives a relaunch
