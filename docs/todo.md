@@ -35,9 +35,10 @@ The goal is to exercise that claim with an app whose data is genuinely read and 
 - [x] Agent guide: `AGENTS.md` (`CLAUDE.md` is a symlink)
 - [x] README in the other repositories' shape (badges, Motivation, Features, Installation, Usage, Compatibility, Limits, then Documentation, Contributing, License). No CI badge: this repository has no workflow, and a badge for a missing workflow would be a dead image
 - [x] Quality gates: pre-commit hooks (markdownlint), `justfile`
-- [ ] Verify the pre-commit hooks (`pre-commit install` has not been run, and `pre-commit`'s Node environment failed to build on this machine: `nodeenv` cannot parse the Node version `0-alpha`; the first six commits were made without the hooks, with markdownlint run through `bunx markdownlint-cli2@0.23.2` instead)
+- [x] Install the pre-commit hooks: `pre-commit`'s default Node resolved to a pre-release whose version string `nodeenv` could not parse (`0-alpha`), so markdownlint's environment never built; `language_version: lts`, as in the other repositories, fixed it, and the hooks now run on every commit
 - [ ] Create the GitHub repository and push — `connect0459/rss-reader`; a separate, explicit decision
-- [ ] CI — deliberately not added yet: a web test needs the Exact checkout, `exact setup`, and a ten-minute first build, so the workflow needs its own design
+- [x] CI (`.github/workflows/ci.yml`, dependabot for its actions): lint through pre-commit, the unit tests, and the web host's contract compile and tests behind a path filter, with a `gate` job. macOS and iOS are not in CI: Exact's own CI runs no Apple build, and the hosted image's Xcode is unconfirmed
+- [ ] Verify the first CI run: the workflow has not run on GitHub. Reproduced locally in a clean clone beside an Exact checkout (no generated files): `contract build` writes `app.contract.d.ts` itself and exits 1 on an error, and `test web` passed 13 of 13. Unconfirmed on a runner: the cold build time (the clone reused a warm Exact `target/`), `setup-chrome`'s Chrome with `exact setup`, and the 60-minute limit
 - [ ] Set `app.name` and `app.id` in `app.json` — `exact new` generated the placeholder `com.example.rss-reader-bfd7e1`, and Exact requires both to be set before building
 
 ## Milestone 1: Tests first (Red)
@@ -153,6 +154,9 @@ Observations from setting up and using Exact, recorded because they cost time an
 - **A finding's remedy can be right for one scheme and wrong for the other.** `verify` named a role for the dark-only contrast failure; the role then failed in light. Reading both schemes in the next run, not trusting the first fix, is part of the loop.
 - **The property search delivers only part of the tests.** `contract verify` replayed 4 of the 8 eligible tests whole and stopped the others at `perf` or `reload`, which its synchronous world does not deliver; `fail fetch`, `request`, `back`, and `expect refusal` are also undeliverable. The seven properties it proposed are therefore about the actions it could drive (`pickFeed`, `pickTab`, `openAdd`, `cancelAdd`, `editUrl`, `saveFeed`, and the clock), not about `toggleStar` or `follow`.
 - **A rebuilt web plan takes seconds.** After the first ten-minute build, `verify` rebuilt the web app in 2 to 5 seconds and the whole run took about 34 seconds.
+- **Exact has to sit beside the app, not inside it.** `exact.mjs` finds the checkout at `../exact`. In CI both repositories are checked out into sibling directories of the workspace (`rss-reader/`, `exact/`), because `actions/checkout` cannot place a path outside the workspace and a nested checkout would put Exact's own `.contract` and TypeScript files under the app's directory.
+- **`contract build` generates `app.contract.d.ts` and fails on an error.** A fresh clone has no generated types, and no separate type step is needed before the compile or the tests; the exit code is 1 when a diagnostic is an error, for `contract build` and for `test web`.
+- **Exact's own CI shows what a hosted runner cannot do.** Its tests run in a separate workflow because the hosted runner takes over an hour, and its CI runs no Apple build. Its Linux job gets Chrome from `setup-chrome` and passes the path in `CHROME`, so `exact setup` downloads no Playwright Chromium; this workflow does the same.
 
 ## Open questions
 
