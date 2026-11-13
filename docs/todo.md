@@ -1,6 +1,6 @@
 # todo - rss-reader
 
-Current state: **Milestones 0 to 4 are complete.** The RSS reader is implemented on the fixture feeds; all twelve `app.test.contract` tests pass on the web, macOS, and iOS Simulator hosts. `verify` is down to findings that all come from the deliberately failing `broken` feed (6 on web, 3 on iOS), which this repository cannot arrange (see Findings). The real feed (Milestone 5) has not been started.
+Current state: **Milestones 0 to 5 are complete.** The RSS reader reads the maintainer's Zenn feed over `net.fetch` on the macOS and iOS hosts, and keeps its tests offline on fixtures. All thirteen `app.test.contract` tests pass on web, macOS, and the iOS Simulator, and `verify` reports one problem on web and on iOS: the failure screen itself, which no `verify.accept` kind can take. The web host cannot read the real feed (CORS). Nothing further is planned.
 
 ---
 
@@ -107,8 +107,21 @@ Goal: specify the RSS reader in `app.test.contract` before touching `app.contrac
 
 ## Milestone 5: Real feed
 
-- [ ] Replace the fixture behind `fetchFeed(url)` with `net.fetch` and add the exact feed URL to `grants`
-- [ ] Keep the fixture for tests; record how the driver's `fail fetch` limitation constrains the success-path test
+- [x] Read the maintainer's Zenn feed (`https://zenn.dev/connect0459/feed`, RSS 2.0) over `net.fetch`; `grants` admit only `https://zenn.dev`
+- [x] Keep tests offline: `example.com` URLs stay on fixtures and never reach `fetch`, so the success path is deterministic without a stub
+- [x] Arrange the failing feed with `fail fetch` (a step, after the first load) against the real Zenn URL, replacing the `broken` fixture; the `unarranged` note is gone
+- [x] Derive route-safe entry ids from URL guids (`entryId.ts`) and feed ids from addresses (`feedId.ts`), both test-first
+- [x] Check the live feed by hand: macOS and iOS Simulator read 5 entries, open one, and the unread count falls; the web host is refused by CORS
+
+### What the real feed showed
+
+- **The fixtures could not show the bug that mattered.** `loadEntries` looked read and starred state up by the raw guid while the stored id was the derived one. Fixture ids are plain tokens, which the derivation leaves alone, so twelve tests passed. Opening a real entry left the unread count at 5 and starring did nothing. A fixture feed whose guids are URLs (`delta`) now reproduces it offline; it failed first, then passed.
+- **`fail fetch` now arranges the failure.** `verify` on web fell from six problems to one. The remaining one is the failure screen reported as `fetch failed (driver fault)`; it is arranged, yet still counted, and `verify.accept` has no kind for a failed resource.
+- **`fail fetch` as a launch line means something else.** It arms before the first load, so every first load to that prefix fails; the driver says so in a note. As a step after `clock data` it models going offline after a load, which is what the test means.
+- **The web host cannot read this feed.** The browser blocks `https://zenn.dev/connect0459/feed` (`No Access-Control-Allow-Origin`), and the app shows its failure state. Native hosts are not subject to CORS and read it. A web-hosted reader would need a feed that sends CORS headers or a proxy.
+- **`grants` narrow what the person can subscribe to.** With `net.fetch https://zenn.dev`, any other host's address is refused and reported as "No feed was found at that address." A general reader would need `net.fetch https:`, which gives up the narrow grant this repository's `SECURITY.md` treats as the point.
+- **The agent needs `clock data` before it taps.** A first `agent` call that tapped immediately found no chips, because the data had not landed; the tests wait for data automatically and the agent does not.
+- **The chip row scrolls on iOS.** The agent's tap on the off-screen Zenn chip reported a scroll, so the horizontal row works under UIKit.
 
 ## Findings
 
@@ -142,9 +155,10 @@ Observations from setting up and using Exact, recorded because they cost time an
 
 ## Open questions
 
+- Whether a reader that can subscribe to any feed is worth widening `grants` to `net.fetch https:`. It is the natural feature and the opposite of the narrow-grant story.
+- Whether the web host should be able to read a feed at all, given CORS; a proxy would add a server this repository does not otherwise have.
 - What the starred snapshots should do when an entry's feed later changes it or drops it. Today a snapshot keeps the text it had when starred, and the reader's list shows the live text.
 - Whether `selectedFeed`'s default (`"alpha"`, the first fixture feed) should come from the feed list instead. It is a literal now because a `resource` argument must be known before `feeds` has loaded.
-- Whether the three counted `broken`-feed findings can be arranged without a real network call. `fail fetch` reaches only `net.fetch`, and `verify.accept` takes no refusal kinds, so Milestone 5 is the way out.
 - Whether the tab bar's icons should align: the Reader tab, which holds a label row, sits a few pixels higher than the Starred tab. Not a counted finding.
 - Whether the Reader screen's large title and the Starred screen's small centered title should match on iOS. Reader keeps a large title; Starred shows the compact one. Not a counted finding.
 - Whether the feed chooser's horizontal row should show that it scrolls (the third chip is cut off at the edge). It scrolls, but nothing says so on a narrow screen.
