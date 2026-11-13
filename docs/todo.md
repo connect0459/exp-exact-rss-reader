@@ -1,6 +1,6 @@
 # todo - rss-reader
 
-Current state: **Milestones 0 to 2 are complete.** The RSS reader is implemented on the fixture feeds and all nine `app.test.contract` tests pass on the web host (plus seven parser tests under `bun test`). `exact verify` (Milestone 3) and the native hosts (Milestone 4) have not been run yet.
+Current state: **Milestones 0 to 3 are complete.** The RSS reader is implemented on the fixture feeds; all ten `app.test.contract` tests pass on the web host (plus seven parser tests under `bun test`), and `./exact.mjs verify` on the web host is down from 18 problems to 3, all of them the deliberately failing `broken` feed, which this repository cannot arrange (see Findings). The native hosts (Milestone 4) have not been run yet.
 
 ---
 
@@ -67,8 +67,25 @@ Goal: specify the RSS reader in `app.test.contract` before touching `app.contrac
 
 ## Milestone 3: `verify`
 
-- [ ] `./exact.mjs verify` clean on the web host (light/dark, two widths, largest text size)
-- [ ] Record the diagnostics it produced and what each one required, since the diagnostics' machine-readable shape is one of the article's claims
+- [x] `./exact.mjs verify` on the web host (light/dark, two widths, largest text size): 18 problems at the first run, 3 at the last. The remaining three are the `broken` feed's two refusals and one "failed and not arranged"; `verify.accept` cannot take them (it covers layout and contrast kinds only), so they stay counted until a real `net.fetch` lets `fail fetch` arrange them (Milestone 5)
+- [x] Persist the chosen feed, driven by the reload note (test first)
+- [x] Adopt six of the seven suggested frame properties as `after … only writes …` lines
+- [x] Record the diagnostics it produced and what each one required (below)
+
+### What `verify` found, and what each finding required
+
+| Run | Problems | What changed |
+| :-- | :-- | :-- |
+| 1 | 18: 9 overlap at the largest size, 6 contrast, 2 refused, 1 not arranged | first run on the Milestone 2 contract |
+| 2 | 12 | headers wrap; feed chooser a scrolling row; the chosen feed persists |
+| 3 | 3 | the unread count inverts with the scheme; the detail title has a minimum width |
+| 4 | 3 | the tab bar repaired after a screenshot showed it broken; the numbers did not change |
+
+- **Overlap, 9 (largest text size).** The headers did not wrap and the feed chooser stacked one 181 px button per feed under them, pushing past the tab bar. Remedy named by `verify`: `flex-wrap="wrap"`. The chooser could not move into the list, because a failed feed shows no list and the person could not leave it; it became one horizontally scrolling row.
+- **Contrast, 6 (dark only).** White text on `-exact-system-red` was 3.4:1. The compiler first refused `-exact-system-background` and named the right role (`-exact-background`), but that role then failed in light (3.5:1), because the system red is brighter in dark than in light and no fixed text colour clears both. Inverting the capsule (`-exact-label` fill, `-exact-background` text) passes in both.
+- **Clipped, 2.** The detail title shared a row with the star button and was 63 px too wide at the largest size; a rem `flex-basis` lets the button wrap beneath it.
+- **Reload notes, 2 (not counted).** The chosen feed reloaded into the first feed. The note said "a saved value must survive a reload; a game or a draft in progress may not", which is the question of whether the choice is a saved value; it is, so it persists.
+- **Refused at run time 2, not arranged 1.** The `broken` feed is refused by design. As predicted at Milestone 1, `verify` counts it.
 
 ## Milestone 4: Native hosts
 
@@ -106,8 +123,14 @@ Observations from setting up and using Exact, recorded because they cost time an
 - **Route parameters are path segments.** The id in `/entry/:id` must not contain `/`. The fixture ids (`a1`, `b2`) are safe; real feeds' `guid`s are often URLs, so Milestone 5 needs an encoding for them.
 - **The mutation check was worth running.** The `perf` assertions could not be proven at Red (earlier steps failed first). Removing `starred` from `starToggled`'s `refreshes` made `query starred counted 0 ... expected == 1` fail, and the Starred tab stopped updating.
 - **The parser is tested under Bun, not Hermes.** `rss.test.ts` runs on Bun. The native hosts run `app.ts` on Hermes, which may differ on `Date.parse`, `String.fromCodePoint`, and regular expressions; the dates are parsed by hand for that reason, but only Milestone 4 shows whether it works there.
+- **`verify`'s numeric checks passed a broken tab bar.** After the contrast and overlap fixes the report had no layout finding, yet the first screenshot showed the Reader tab's icon at the corner and the unread count as a white capsule outside the bar. Contrast, overlap, and clipping are measured; whether a screen looks right is not. The report itself says to look at the screenshots once the features work, and that was necessary here.
+- **A finding's remedy can be right for one scheme and wrong for the other.** `verify` named a role for the dark-only contrast failure; the role then failed in light. Reading both schemes in the next run, not trusting the first fix, is part of the loop.
+- **The property search delivers only part of the tests.** `contract verify` replayed 4 of the 8 eligible tests whole and stopped the others at `perf` or `reload`, which its synchronous world does not deliver; `fail fetch`, `request`, `back`, and `expect refusal` are also undeliverable. The seven properties it proposed are therefore about the actions it could drive (`pickFeed`, `pickTab`, `openAdd`, `cancelAdd`, `editUrl`, `saveFeed`, and the clock), not about `toggleStar` or `follow`.
+- **A rebuilt web plan takes seconds.** After the first ten-minute build, `verify` rebuilt the web app in 2 to 5 seconds and the whole run took about 34 seconds.
 
 ## Open questions
 
 - What the starred snapshots should do when an entry's feed later changes it or drops it. Today a snapshot keeps the text it had when starred, and the reader's list shows the live text.
 - Whether `selectedFeed`'s default (`"alpha"`, the first fixture feed) should come from the feed list instead. It is a literal now because a `resource` argument must be known before `feeds` has loaded.
+- Whether the three counted `broken`-feed findings can be arranged without a real network call. `fail fetch` reaches only `net.fetch`, and `verify.accept` takes no refusal kinds, so Milestone 5 is the way out.
+- Whether the tab bar's icons should align: the Reader tab, which holds a label row, sits a few pixels higher than the Starred tab. Not a counted finding.
