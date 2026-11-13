@@ -166,11 +166,10 @@ component App
         button role="tab" aria-controls="panel-reader" aria-selected=(nav.tab == "reader") press=pickTab("reader")
           testId="tab-reader" flex=1 display="flex" flex-direction="column" align-items="center" gap=2
           image "symbol:document"
-          row align-items="center" gap=6
-            text "Reader"
-            if unread > 0
-              row background-color="-exact-label" border-radius=12 padding="0 6px"
-                text `${unread}` font-variant-numeric="tabular-nums" font="-exact-footnote" color="-exact-background"
+          text "Reader"
+          if unread > 0
+            row background-color="-exact-label" border-radius=12 padding="0 6px"
+              text `${unread}` font-variant-numeric="tabular-nums" font="-exact-footnote" color="-exact-background"
         button role="tab" aria-controls="panel-starred" aria-selected=(nav.tab == "starred") press=pickTab("starred")
           testId="tab-starred" flex=1 display="flex" flex-direction="column" align-items="center" gap=2
           image "symbol:star"
