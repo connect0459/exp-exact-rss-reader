@@ -51,14 +51,14 @@ without this information.
 
 - Describe any test considerations beyond `app.test.contract`.
 - Note which hosts were validated (web / macOS / iOS Simulator) and whether `exact verify` is clean.
+- If `grants` changed, say what the app may now fetch, read, or write.
 
 ## [Required] Quality Checklist
 
 **Please check all items before merging.**
 
-- [ ] **Tests**: `./exact.mjs test web` passes
-- [ ] **Verify**: `./exact.mjs verify` is clean for the hosts this change affects
-- [ ] **Grants**: `grants` in `app.ts` lists only what the app actually reads, writes, or fetches
+- [ ] **CI Workflow Execution**: All checks passed on the [CI workflow](../actions/workflows/ci.yml) for this PR.
+- [ ] **Code Comments**: Code comments and function/method-level doc-comments are in sync with the changes
 - [ ] **Reference Docs**: `docs/todo.md` is updated if this change resolves an open question or surfaces a new one
 
 > **Important**: This checklist ensures quality. Please verify all items before requesting review.
