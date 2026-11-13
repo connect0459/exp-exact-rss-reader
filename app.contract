@@ -31,7 +31,7 @@ fn pool(tab: string, reader: Article[], starred: Article[]): Article[] = tab == 
 fn lastSegment(url: string): string = match url.split("/").at(-1) { case some(s) => s, case none => "" }
 
 component App
-  state selectedFeed = "alpha"
+  state selectedFeed = "alpha" persist
   state draftUrl = ""
   state refusal = ""
   resource feeds = loadFeeds() as shape Feed[] else empty()
