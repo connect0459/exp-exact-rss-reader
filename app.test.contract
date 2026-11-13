@@ -29,6 +29,19 @@ test "opening an entry marks it read, and it stays read after a relaunch"
   reload
   expect state unread == 2
 
+test "an entry whose guid is a URL opens, is marked read, and can be starred"
+  tap "feed-delta"
+  clock data
+  expect state unread == 2
+  tap "Delta one"
+  clock settle
+  clock data
+  expect state unread == 1
+  tap "star-reader"
+  clock data
+  expect state starred.0 .feedId == "delta"
+  expect state entries.1 .starred == true
+
 test "a starred entry is listed under Starred and stays starred after a relaunch"
   tap "entry-a2"
   clock settle
@@ -71,7 +84,9 @@ test "the reader tab keeps its open entry while the Starred tab is in use"
   expect tree has "detail-title-reader"
 
 test "a feed that fails says so, and retrying asks its source again"
-  tap "feed-broken"
+  clock data
+  fail fetch "https://zenn.dev"
+  tap "feed-zenn"
   clock data
   expect tree has "retry"
   expect tree missing "entry-a1"
@@ -82,7 +97,9 @@ test "a feed that fails says so, and retrying asks its source again"
   expect tree has "retry"
 
 test "choosing a working feed after a failure lists its entries again"
-  tap "feed-broken"
+  clock data
+  fail fetch "https://zenn.dev"
+  tap "feed-zenn"
   clock data
   expect tree has "retry"
   tap "feed-alpha"
