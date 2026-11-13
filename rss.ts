@@ -48,7 +48,7 @@ function plainText(raw: string | null): string {
 function summaryText(raw: string | null): string {
   if (raw === null) return '';
   const cdata = CDATA.exec(raw);
-  return cdata ? decodeEntities(stripTags(cdata[1])) : stripTags(decodeEntities(raw));
+  return decodeEntities(stripTags(cdata ? cdata[1] : decodeEntities(raw)));
 }
 
 function instantOf(text: string): number {

@@ -29,6 +29,12 @@ test('entities and CDATA in titles and summaries are decoded to plain text', () 
   expect(parsed.entries[0].summary).toBe('Hello & welcome');
 });
 
+test('escaped HTML in a summary is reduced to plain text, entities included', () => {
+  const parsed = parseFeed(feed(
+    item({ guid: 'a1', description: '&lt;p&gt;Second &lt;b&gt;post&lt;/b&gt; &amp;amp; more&lt;/p&gt;' })));
+  expect(parsed.entries[0].summary).toBe('Second post & more');
+});
+
 test('an item without a guid is identified by its link', () => {
   const parsed = parseFeed(feed(item({ title: 'One', link: 'https://example.com/1' })));
   expect(parsed.entries[0].id).toBe('https://example.com/1');
