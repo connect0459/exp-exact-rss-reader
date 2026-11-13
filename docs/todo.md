@@ -1,6 +1,6 @@
 # todo - rss-reader
 
-Current state: **Milestone 0 (environment and community standard files) is complete.** The Exact checkout builds and passes its own `caltrain` web tests on this machine (Bun 1.4.2 through mise, Xcode 27.2 selected per command, Rust 1.97). The `list-detail` pattern is applied as the starting point and is not yet adapted: `app.contract`, `app.ts`, and `app.test.contract` still describe the generic item list. The RSS reader itself starts at Milestone 1.
+Current state: **Milestones 0 to 2 are complete.** The RSS reader is implemented on the fixture feeds and all nine `app.test.contract` tests pass on the web host (plus seven parser tests under `bun test`). `exact verify` (Milestone 3) and the native hosts (Milestone 4) have not been run yet.
 
 ---
 
@@ -56,12 +56,14 @@ Goal: specify the RSS reader in `app.test.contract` before touching `app.contrac
 
 ## Milestone 2: Contract and data module (Green)
 
-- [ ] `shape Feed`, `shape Entry`, and the fixture feeds (including one that always fails)
-- [ ] `resource feeds`, `resource entries` (argument: selected feed), `mutation markRead`, `mutation toggleStar`, `mutation addFeed`, each with its `refreshes`
-- [ ] `routes nav` for the two tabs and the entry detail
-- [ ] `app.ts` answers every declared name; `fetchFeed(url)` is the only place that knows where feed text comes from
-- [ ] Remove the `list-detail` pattern's leftovers (items, lock, notes) rather than carrying them
-- [ ] `./exact.mjs test web` green; `./exact.mjs contract build app.contract --json --errors-only` clean
+- [x] `shape Feed`, `shape Article` (not `Entry`: `routes` reserves that name), and the fixture feeds (including one that always fails)
+- [x] `resource feeds`, `resource entries` (argument: selected feed), `resource starred`, and the mutations `marked`, `starToggled`, `subscribed`, each with its `refreshes`
+- [x] `routes nav` for the two tabs, the entry detail, and the add-feed sheet
+- [x] `app.ts` answers every declared name; `fetchFeed(url)` in `source.ts` is the only place that knows where feed text comes from
+- [x] An RSS 2.0 parser (`rss.ts`) with its own tests, written test-first; Atom is not supported
+- [x] Remove the `list-detail` pattern's leftovers (items, lock, notes) rather than carrying them
+- [x] `./exact.mjs test web` green (9 passed, 0 failed); `./exact.mjs contract build app.contract --json --errors-only` clean
+- [x] Mutation check: removing `starred` from `starToggled`'s `refreshes` makes two tests fail (`query starred counted 0 ... expected == 1`, and the Starred tab no longer lists the entry), so the `perf` assertions are not vacuous
 
 ## Milestone 3: `verify`
 
@@ -97,6 +99,15 @@ Observations from setting up and using Exact, recorded because they cost time an
 - **`expect perf query <resource>` counts how often a resource's data source was asked.** It makes "this declaration refreshes exactly these resources" a test, which is the claim the article's `refreshes` rests on. `perf` blocks refuse `clock … real`.
 - **`fail fetch` reaches only `net.fetch`.** With the fixture feed there is no fetch, so the failing-feed test relies on a fixture URL that makes the data module throw instead. Separately, `expect no failures` treats a refused resource as unarranged unless `fail fetch` fired, so the failing-feed test cannot use it, and `verify` counts such failures as findings (to be checked at Milestone 3).
 
+- **`routes` reserves the type name `Entry`.** `shape Entry` fails with `type-shape-reserved` (`Entry` is declared by `routes`); the shape is named `Article`.
+- **`contract build` type-checks `app.ts`.** It checks the data module against the types generated from the contract (`TS2344` on a source the contract does not declare), so a renamed source is caught before the tests run.
+- **Several resources refresh with a comma.** `mutation m as shape Reply refreshes a, b`; `then <action>` follows the list.
+- **A `link`'s `press` does not run when its `href` navigates.** Tapping a row declared as `link href=... press=open(id)` left the screen unchanged, and every test that opened a detail failed. Navigation reaches the root's `navigate` action, so opening an entry marks it read from `follow(url)`, taking the id from the URL's last segment.
+- **Route parameters are path segments.** The id in `/entry/:id` must not contain `/`. The fixture ids (`a1`, `b2`) are safe; real feeds' `guid`s are often URLs, so Milestone 5 needs an encoding for them.
+- **The mutation check was worth running.** The `perf` assertions could not be proven at Red (earlier steps failed first). Removing `starred` from `starToggled`'s `refreshes` made `query starred counted 0 ... expected == 1` fail, and the Starred tab stopped updating.
+- **The parser is tested under Bun, not Hermes.** `rss.test.ts` runs on Bun. The native hosts run `app.ts` on Hermes, which may differ on `Date.parse`, `String.fromCodePoint`, and regular expressions; the dates are parsed by hand for that reason, but only Milestone 4 shows whether it works there.
+
 ## Open questions
 
-- Whether `app:/data/state.json` should hold read and starred state together with the entries, or whether the fixture feeds should stay read-only and state live in its own file. Milestone 1's relaunch test will force the choice.
+- What the starred snapshots should do when an entry's feed later changes it or drops it. Today a snapshot keeps the text it had when starred, and the reader's list shows the live text.
+- Whether `selectedFeed`'s default (`"alpha"`, the first fixture feed) should come from the feed list instead. It is a literal now because a `resource` argument must be known before `feeds` has loaded.
