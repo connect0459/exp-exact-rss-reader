@@ -91,7 +91,7 @@ docs: record the Xcode 27.2 setup finding
 4. If the change touches `grants`, confirm the list still names only what the app reads, writes, or fetches.
 5. If the change affects the native hosts, confirm the relevant host still builds and runs (`./exact.mjs mac --run` or `./exact.mjs ios --run`).
 6. Update `docs/todo.md` if the change resolves an open question or surfaces a new one — this file is the project's primary record, more so than commit messages alone.
-7. Open a pull request.
+7. Open a pull request. CI runs lint (pre-commit) and the unit tests on every change, and the web host's contract compile and tests when the contract, the tests, or any TypeScript changed; the macOS and iOS hosts are not in CI, so run them locally when a change affects them.
 
 ## Code style
 

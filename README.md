@@ -1,5 +1,6 @@
 # rss-reader
 
+[![CI](https://github.com/connect0459/rss-reader/actions/workflows/ci.yml/badge.svg)](https://github.com/connect0459/rss-reader/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://github.com/connect0459/rss-reader/blob/main/LICENSE)
 [![Built with Exact](https://img.shields.io/badge/built%20with-Exact-black.svg)](https://github.com/expo/exact)
 [![Hosts: web | macOS | iOS](https://img.shields.io/badge/hosts-web%20%7C%20macOS%20%7C%20iOS-lightgrey.svg)](#compatibility)
