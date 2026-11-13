@@ -13,6 +13,13 @@ test "choosing another feed lists its entries and asks the source once"
   expect tree missing "entry-a1"
   expect tree has "entry-b1"
 
+test "the chosen feed is still chosen after a relaunch"
+  tap "feed-beta"
+  clock data
+  reload
+  expect state selectedFeed == "beta"
+  expect state entries.0 .id == "b2"
+
 test "opening an entry marks it read, and it stays read after a relaunch"
   tap "entry-a1"
   clock settle
@@ -93,3 +100,21 @@ test "an address with no feed is refused with a reason, and a real one becomes a
   tap "feed-gamma"
   clock data
   expect state entries.0 .id == "g1"
+
+after "pickFeed" "choosing a feed changes only the chosen feed"
+  only writes selectedFeed
+
+after "pickTab" "switching tabs changes only the navigation"
+  only writes nav
+
+after "openAdd" "opening the add sheet resets the draft and navigates, and nothing else"
+  only writes draftUrl nav refusal
+
+after "cancelAdd" "cancelling the add sheet changes only the navigation"
+  only writes nav
+
+after "editUrl" "typing an address changes only the draft"
+  only writes draftUrl
+
+after "saveFeed" "saving a feed changes only the navigation, the refusal, and the reply"
+  only writes nav refusal subscribed
