@@ -1,6 +1,6 @@
 # todo - rss-reader
 
-Current state: **Milestones 0 to 3 are complete.** The RSS reader is implemented on the fixture feeds; all ten `app.test.contract` tests pass on the web host (plus seven parser tests under `bun test`), and `./exact.mjs verify` on the web host is down from 18 problems to 3, all of them the deliberately failing `broken` feed, which this repository cannot arrange (see Findings). The native hosts (Milestone 4) have not been run yet.
+Current state: **Milestones 0 to 4 are complete.** The RSS reader is implemented on the fixture feeds; all twelve `app.test.contract` tests pass on the web, macOS, and iOS Simulator hosts. `verify` is down to findings that all come from the deliberately failing `broken` feed (6 on web, 3 on iOS), which this repository cannot arrange (see Findings). The real feed (Milestone 5) has not been started.
 
 ---
 
@@ -89,9 +89,21 @@ Goal: specify the RSS reader in `app.test.contract` before touching `app.contrac
 
 ## Milestone 4: Native hosts
 
-- [ ] `./exact.mjs mac --run` (first build is expected to take ten to fifteen minutes)
-- [ ] `./exact.mjs ios --run` on an iOS Simulator, then `./exact.mjs verify ios`
-- [ ] Compare the three hosts' behavior for the same `app.test.contract`
+- [x] macOS: `./exact.mjs test macos` runs the same tests; 10 of 10 on the first run (first build about 12 minutes), 12 of 12 after the tests grew
+- [x] iOS Simulator (iPhone 17 Pro, iOS 26.5): `./exact.mjs test ios`, 10 of 10 on the first run (first build about 7 minutes), 12 of 12 after
+- [x] `./exact.mjs verify ios`: tests pass, nothing spills at the largest text size, and the six `after … only writes …` properties held (134 to 232 checks each); the findings are the `broken` feed's
+- [x] Compare the three hosts: the same tests give the same results on all three, so the parser and the data module behave the same on Hermes as under Bun
+- [x] Look at the screenshots on iOS, not only the report (found the lost tab label and badge, below)
+- [x] Make the failure screen and the add sheet's refusal the last screen of a test, because `verify` checks only those
+
+### What the native hosts showed
+
+- **The same tests passed on all three hosts the first time.** Nothing in the parser (`Date.parse` avoided, entities decoded by hand) or the data module needed a native-specific change.
+- **A fix for one host broke another.** To repair the web tab bar I wrapped the Reader tab's label in a `row`. On iOS the native tab bar then showed neither the label nor the unread badge, because it reads the button's direct `image`, `text`, and badge children. No test failed and `verify ios` reported nothing; only the screenshot showed it. Restoring the flat structure, with the column layout on the button itself, gave the native bar its label and a native red badge, and kept the web bar acceptable.
+- **`verify` checks only the screens a test ends on.** The failing-feed screen and the refused-address sheet were never the last screen of a test, so they had never been checked. Ending tests there added three findings, all the `broken` feed's.
+- **`verify ios` takes minutes, not seconds.** About 200 to 240 seconds against about 35 on web.
+- **Native scrolling was not measured.** The scrolling check runs about 15 seconds of real touches on a long first-screen list; the alpha feed has three entries.
+- **The Metal toolchain is absent** (`xcodebuild -downloadComponent MetalToolchain`), so canvases would draw with Core Graphics; this app has no canvas.
 
 ## Milestone 5: Real feed
 
@@ -134,3 +146,5 @@ Observations from setting up and using Exact, recorded because they cost time an
 - Whether `selectedFeed`'s default (`"alpha"`, the first fixture feed) should come from the feed list instead. It is a literal now because a `resource` argument must be known before `feeds` has loaded.
 - Whether the three counted `broken`-feed findings can be arranged without a real network call. `fail fetch` reaches only `net.fetch`, and `verify.accept` takes no refusal kinds, so Milestone 5 is the way out.
 - Whether the tab bar's icons should align: the Reader tab, which holds a label row, sits a few pixels higher than the Starred tab. Not a counted finding.
+- Whether the Reader screen's large title and the Starred screen's small centered title should match on iOS. Reader keeps a large title; Starred shows the compact one. Not a counted finding.
+- Whether the feed chooser's horizontal row should show that it scrolls (the third chip is cut off at the edge). It scrolls, but nothing says so on a narrow screen.
