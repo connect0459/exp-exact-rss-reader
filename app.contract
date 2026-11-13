@@ -81,13 +81,13 @@ component App
               if e.name == "reader"
                 column navigationKey=`${e.id}` navigationScroll="reader-list" position="absolute" inset=0
                   display="flex" flex-direction="column"
-                  header display="flex" align-items="center" gap=8 padding="8px 16px"
+                  header display="flex" flex-wrap="wrap" align-items="center" gap=8 padding="8px 16px"
                     text "Reader" role="heading" aria-level=1 flex=1
                     button press=openAdd aria-label="Add Feed" testId="add-feed"
                       image "symbol:add"
-                  row gap=8 padding="0 16px 8px" flex-wrap="wrap"
+                  row gap=8 padding="0 16px 8px" overflow-x="auto" flex-shrink=0
                     for f in feeds key=f.id
-                      button press=pickFeed(f.id) buttonStyle=(f.id == selectedFeed ? "filled" : "bordered") testId=`feed-${f.id}`
+                      button press=pickFeed(f.id) buttonStyle=(f.id == selectedFeed ? "filled" : "bordered") flex-shrink=0 testId=`feed-${f.id}`
                         text f.title
                   if failed(entries)
                     EmptyState(symbol="symbol:alert", title="Can’t Load This Feed", message="Something went wrong reading it.")
@@ -111,7 +111,7 @@ component App
               else if e.name == "starred"
                 column navigationKey=`${e.id}` navigationScroll="starred-list" position="absolute" inset=0
                   display="flex" flex-direction="column"
-                  header display="flex" align-items="center" gap=8 padding="8px 16px"
+                  header display="flex" flex-wrap="wrap" align-items="center" gap=8 padding="8px 16px"
                     text "Starred" role="heading" aria-level=1 flex=1
                   if starred.length == 0 and not pending(starred)
                     EmptyState(symbol="symbol:star", title="Nothing Starred", message="Open an entry and tap the star.")
@@ -127,7 +127,7 @@ component App
               else if e.name == "addFeed"
                 column navigationKey=`${e.id}` navigationPresentation="modal" navigationScroll="add-feed-form" position="absolute" inset=0
                   display="flex" flex-direction="column"
-                  header display="flex" align-items="center" justify-content="space-between" padding="8px 16px"
+                  header display="flex" flex-wrap="wrap" align-items="center" justify-content="space-between" padding="8px 16px"
                     button press=cancelAdd aria-label="Cancel" testId="add-feed-cancel"
                       image "symbol:close"
                     text "Add Feed" role="heading"
@@ -145,8 +145,8 @@ component App
               else
                 column navigationKey=`${e.id}` navigationScroll=`content-${e.id}` position="absolute" inset=0
                   display="flex" flex-direction="column"
-                  header display="flex" align-items="center" gap=8 padding="8px 16px"
-                    text titleOf(pool(t.name, entries, starred), e.params.id) role="heading" aria-level=2 flex=1 line-clamp=2
+                  header display="flex" flex-wrap="wrap" align-items="center" gap=8 padding="8px 16px"
+                    text titleOf(pool(t.name, entries, starred), e.params.id) role="heading" aria-level=2 flex-grow=1 flex-shrink=1 flex-basis="10rem" line-clamp=2
                       testId=`detail-title-${t.name}`
                     button press=toggleStar(e.params.id) aria-label="Star" testId=`star-${t.name}`
                       image (pool(t.name, entries, starred).filter(x => x.id == e.params.id and x.starred).length > 0 ? "symbol:star-fill" : "symbol:star")
@@ -164,13 +164,14 @@ component App
                           text it.link flex=1 min-width=0 line-clamp=1 font="-exact-footnote" color="-exact-secondary-label"
       row role="tablist" testId="tabs"
         button role="tab" aria-controls="panel-reader" aria-selected=(nav.tab == "reader") press=pickTab("reader")
-          testId="tab-reader" flex=1
+          testId="tab-reader" flex=1 display="flex" flex-direction="column" align-items="center" gap=2
           image "symbol:document"
-          text "Reader"
-          if unread > 0
-            row background-color="-exact-system-red" border-radius=12
-              text `${unread}` font-variant-numeric="tabular-nums"
+          row align-items="center" gap=6
+            text "Reader"
+            if unread > 0
+              row background-color="-exact-label" border-radius=12 padding="0 6px"
+                text `${unread}` font-variant-numeric="tabular-nums" font="-exact-footnote" color="-exact-background"
         button role="tab" aria-controls="panel-starred" aria-selected=(nav.tab == "starred") press=pickTab("starred")
-          testId="tab-starred" flex=1
+          testId="tab-starred" flex=1 display="flex" flex-direction="column" align-items="center" gap=2
           image "symbol:star"
           text "Starred"
