@@ -33,6 +33,7 @@ The goal is to exercise that claim with an app whose data is genuinely read and 
 - [x] Scaffolded this app with `exact new`, then applied `list-detail` (see Findings for the non-empty directory workaround)
 - [x] Community standard files: `LICENSE` (Apache-2.0), `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `SECURITY.md`, PR and issue templates, `dependabot.yml`
 - [x] Agent guide: `AGENTS.md` (`CLAUDE.md` is a symlink)
+- [x] README in the other repositories' shape (badges, Motivation, Features, Installation, Usage, Compatibility, Limits, then Documentation, Contributing, License). No CI badge: this repository has no workflow, and a badge for a missing workflow would be a dead image
 - [x] Quality gates: pre-commit hooks (markdownlint), `justfile`
 - [ ] Verify the pre-commit hooks (`pre-commit install` has not been run, and `pre-commit`'s Node environment failed to build on this machine: `nodeenv` cannot parse the Node version `0-alpha`; the first six commits were made without the hooks, with markdownlint run through `bunx markdownlint-cli2@0.23.2` instead)
 - [ ] Create the GitHub repository and push — `connect0459/rss-reader`; a separate, explicit decision
