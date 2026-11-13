@@ -1,0 +1,36 @@
+{
+  "$schema": "../exact/scripts/app.schema.json",
+  "name": "Rss Reader",
+  "short_name": "Rss Reader",
+  "id": "com.example.exp-exact-rss-reader-bfd7e1",
+  "start_url": "/",
+  "display": "standalone",
+  "app": {
+    "id": "com.example.exp-exact-rss-reader-bfd7e1",
+    "name": "Rss Reader"
+  },
+  "host": {
+    "web": {},
+    "macos": {
+      "minimumOS": "14.0",
+      "window": {
+        "width": 900,
+        "height": 700
+      }
+    },
+    "ios": {
+      "minimumOS": "17.0",
+      "deviceFamily": [
+        "iphone",
+        "ipad"
+      ]
+    }
+  },
+  "deploy": {
+    "store": {
+      "web": "0",
+      "macos": "0",
+      "ios": "0"
+    }
+  }
+}

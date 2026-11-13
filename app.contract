@@ -1,0 +1,176 @@
+use Badge, EmptyState from "exact:content"
+
+routes nav
+  tab reader "/"
+    entry "/entry/:id"
+    addFeed "/add-feed"
+  tab starred "/starred"
+    starredEntry "/starred/:id"
+
+shape Feed
+  id: string
+  title: string
+  url: string
+
+shape Article
+  id: string
+  feedId: string
+  title: string
+  summary: string
+  link: string
+  published: string
+  read: bool
+  starred: bool
+
+shape Reply
+  ok: bool
+  error: string
+
+fn titleOf(items: Article[], id: string): string = match first(items.filter(e => e.id == id)) { case some(e) => e.title, case none => "" }
+fn pool(tab: string, reader: Article[], starred: Article[]): Article[] = tab == "starred" ? starred : reader
+fn lastSegment(url: string): string = match url.split("/").at(-1) { case some(s) => s, case none => "" }
+
+component App
+  state selectedFeed = "alpha" persist
+  state draftUrl = ""
+  state refusal = ""
+  resource feeds = loadFeeds() as shape Feed[] else empty()
+  resource entries = loadEntries(selectedFeed) as shape Article[] else empty()
+  resource starred = loadStarred() as shape Article[] else empty()
+  mutation marked as shape Reply refreshes entries, starred
+  mutation starToggled as shape Reply refreshes entries, starred
+  mutation subscribed as shape Reply refreshes feeds then afterSubscribe
+  derive unread = entries.filter(e => not e.read).length
+  derive subscribeError = match subscribed { case some(r) => r.error, case none => "" }
+
+  action pickTab(name: string)
+    nav = select(nav, name)
+  action follow(url: string)
+    nav = go(nav, url)
+    if url.startsWith("/entry/") or url.startsWith("/starred/")
+      send marked = markRead(lastSegment(url))
+  action pickFeed(id: string)
+    selectedFeed = id
+  action reloadEntries
+    refresh entries
+  action toggleStar(id: string)
+    send starToggled = flipStar(id)
+  action openAdd
+    draftUrl = ""
+    refusal = ""
+    nav = push(nav, "/add-feed")
+  action cancelAdd
+    nav = back(nav)
+  action editUrl(v: string)
+    draftUrl = v
+  action saveFeed
+    if draftUrl.trim() != "" and not pending(subscribed)
+      send subscribed = subscribe(draftUrl.trim())
+  action afterSubscribe
+    refusal = subscribeError
+    if subscribeError == "" and top(nav).name == "addFeed"
+      nav = back(nav)
+
+  view
+    main navigationKey=`${top(nav).id}` navigationBack="back" navigate=follow testId="app" width="100%" height="100%"
+      display="flex" flex-direction="column"
+      column flex=1 min-height=0 position="relative"
+        for t in nav.tabs key=t.name
+          column role="tabpanel" id=`panel-${t.name}` position="absolute" inset=0
+            for e in t.stack key=e.id
+              if e.name == "reader"
+                column navigationKey=`${e.id}` navigationScroll="reader-list" position="absolute" inset=0
+                  display="flex" flex-direction="column"
+                  header display="flex" flex-wrap="wrap" align-items="center" gap=8 padding="8px 16px"
+                    text "Reader" role="heading" aria-level=1 flex=1
+                    button press=openAdd aria-label="Add Feed" testId="add-feed"
+                      image "symbol:add"
+                  row gap=8 padding="0 16px 8px" overflow-x="auto" flex-shrink=0
+                    for f in feeds key=f.id
+                      button press=pickFeed(f.id) buttonStyle=(f.id == selectedFeed ? "filled" : "bordered") flex-shrink=0 testId=`feed-${f.id}`
+                        text f.title
+                  if failed(entries)
+                    EmptyState(symbol="symbol:alert", title="Can’t Load This Feed", message="Something went wrong reading it.")
+                      button press=reloadEntries testId="retry"
+                        text "Try Again"
+                  else if entries.length == 0 and not pending(entries)
+                    EmptyState(symbol="symbol:document", title="No Entries", message="This feed has nothing in it yet.")
+                  else
+                    list id="reader-list" appearance="auto" listStyle="inset-grouped" flex=1 min-height=0
+                      section
+                        for it in entries key=it.id
+                          link href=path("entry", it.id) testId=`entry-${it.id}`
+                            column flex=1 min-width=0 gap=2 padding-top=4 padding-bottom=4
+                              text it.title line-clamp=2
+                              text it.published font="-exact-subheadline" color="-exact-secondary-label"
+                            if not it.read
+                              Badge(label="New", tint=none)
+                            if it.starred
+                              image "symbol:star-fill"
+                            image "symbol:forward-chevron"
+              else if e.name == "starred"
+                column navigationKey=`${e.id}` navigationScroll="starred-list" position="absolute" inset=0
+                  display="flex" flex-direction="column"
+                  header display="flex" flex-wrap="wrap" align-items="center" gap=8 padding="8px 16px"
+                    text "Starred" role="heading" aria-level=1 flex=1
+                  if starred.length == 0 and not pending(starred)
+                    EmptyState(symbol="symbol:star", title="Nothing Starred", message="Open an entry and tap the star.")
+                  else
+                    list id="starred-list" appearance="auto" listStyle="inset-grouped" flex=1 min-height=0
+                      section
+                        for it in starred key=it.id
+                          link href=path("starredEntry", it.id) testId=`starred-${it.id}`
+                            column flex=1 min-width=0 gap=2 padding-top=4 padding-bottom=4
+                              text it.title line-clamp=2
+                              text it.published font="-exact-subheadline" color="-exact-secondary-label"
+                            image "symbol:forward-chevron"
+              else if e.name == "addFeed"
+                column navigationKey=`${e.id}` navigationPresentation="modal" navigationScroll="add-feed-form" position="absolute" inset=0
+                  display="flex" flex-direction="column"
+                  header display="flex" flex-wrap="wrap" align-items="center" justify-content="space-between" padding="8px 16px"
+                    button press=cancelAdd aria-label="Cancel" testId="add-feed-cancel"
+                      image "symbol:close"
+                    text "Add Feed" role="heading"
+                    button press=saveFeed buttonStyle="bordered-prominent" aria-label="Add" testId="add-feed-save"
+                      disabled=(draftUrl.trim() == "" or pending(subscribed))
+                      image "symbol:checkmark"
+                  list id="add-feed-form" appearance="auto" listStyle="inset-grouped" flex=1 min-height=0
+                    section
+                      row
+                        column flex=1 min-width=0 gap=4
+                          input value=draftUrl input=editUrl placeholder="https://example.com/feed.xml" aria-label="Feed address"
+                            autofocus=true submit=saveFeed aria-invalid=(refusal != "") testId="add-feed-url"
+                          if refusal != ""
+                            text refusal font="-exact-footnote" color="-exact-system-red" testId="add-feed-error"
+              else
+                column navigationKey=`${e.id}` navigationScroll=`content-${e.id}` position="absolute" inset=0
+                  display="flex" flex-direction="column"
+                  header display="flex" flex-wrap="wrap" align-items="center" gap=8 padding="8px 16px"
+                    text titleOf(pool(t.name, entries, starred), e.params.id) role="heading" aria-level=2 flex-grow=1 flex-shrink=1 flex-basis="10rem" line-clamp=2
+                      testId=`detail-title-${t.name}`
+                    button press=toggleStar(e.params.id) aria-label="Star" testId=`star-${t.name}`
+                      image (pool(t.name, entries, starred).filter(x => x.id == e.params.id and x.starred).length > 0 ? "symbol:star-fill" : "symbol:star")
+                  list id=`content-${e.id}` appearance="auto" listStyle="inset-grouped" flex=1 min-height=0
+                    for it in pool(t.name, entries, starred).filter(x => x.id == e.params.id) key=it.id
+                      section
+                        row
+                          text "Published"
+                          text it.published
+                      section
+                        row padding-top=10 padding-bottom=10
+                          text (it.summary == "" ? "No summary." : it.summary) flex=1 min-width=0 testId=`detail-summary-${t.name}`
+                      section
+                        row
+                          text it.link flex=1 min-width=0 line-clamp=1 font="-exact-footnote" color="-exact-secondary-label"
+      row role="tablist" testId="tabs"
+        button role="tab" aria-controls="panel-reader" aria-selected=(nav.tab == "reader") press=pickTab("reader")
+          testId="tab-reader" flex=1 display="flex" flex-direction="column" align-items="center" gap=2
+          image "symbol:document"
+          text "Reader"
+          if unread > 0
+            row background-color="-exact-label" border-radius=12 padding="0 6px"
+              text `${unread}` font-variant-numeric="tabular-nums" font="-exact-footnote" color="-exact-background"
+        button role="tab" aria-controls="panel-starred" aria-selected=(nav.tab == "starred") press=pickTab("starred")
+          testId="tab-starred" flex=1 display="flex" flex-direction="column" align-items="center" gap=2
+          image "symbol:star"
+          text "Starred"
