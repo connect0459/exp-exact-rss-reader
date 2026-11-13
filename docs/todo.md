@@ -39,7 +39,6 @@ The goal is to exercise that claim with an app whose data is genuinely read and 
 - [x] Install the pre-commit hooks: `pre-commit`'s default Node resolved to a pre-release whose version string `nodeenv` could not parse (`0-alpha`), so markdownlint's environment never built; `language_version: lts`, as in the other repositories, fixed it, and the hooks now run on every commit
 - [x] Create the public GitHub repository and push (`connect0459/exp-exact-rss-reader`, renamed from `rss-reader` before the first pull request)
 - [x] CI (`.github/workflows/ci.yml`, dependabot for its actions): lint through pre-commit, the unit tests, and the web host's contract compile and tests behind a path filter, with a `gate` job. macOS and iOS are not in CI: Exact's own CI runs no Apple build, and the hosted image's Xcode is unconfirmed
-- [ ] Verify the first CI run: the workflow has not run on GitHub. Reproduced locally in a clean clone beside an Exact checkout (no generated files): `contract build` writes `app.contract.d.ts` itself and exits 1 on an error, and `test web` passed 13 of 13. Unconfirmed on a runner: the cold build time (the clone reused a warm Exact `target/`), `setup-chrome`'s Chrome with `exact setup`, and the 60-minute limit
 - [ ] Set `app.name` and `app.id` in `app.json` — `exact new` generated the placeholder `com.example.rss-reader-bfd7e1`, and Exact requires both to be set before building
 
 ## Milestone 1: Tests first (Red)
