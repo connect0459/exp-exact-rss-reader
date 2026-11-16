@@ -166,6 +166,5 @@ Observations from setting up and using Exact, recorded because they cost time an
 - Whether the web host should be able to read a feed at all, given CORS; a proxy would add a server this repository does not otherwise have.
 - What the starred snapshots should do when an entry's feed later changes it or drops it. Today a snapshot keeps the text it had when starred, and the reader's list shows the live text.
 - Whether `selectedFeed`'s default (`"alpha"`, the first fixture feed) should come from the feed list instead. It is a literal now because a `resource` argument must be known before `feeds` has loaded.
-- Whether the tab bar's icons should align: the Reader tab, which holds a label row, sits a few pixels higher than the Starred tab. Not a counted finding.
 - Whether the Reader screen's large title and the Starred screen's small centered title should match on iOS. Reader keeps a large title; Starred shows the compact one. Not a counted finding.
 - Whether the feed chooser's horizontal row should show that it scrolls (the third chip is cut off at the edge). It scrolls, but nothing says so on a narrow screen.
