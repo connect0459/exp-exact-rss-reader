@@ -1,0 +1,151 @@
+test "the reader opens on the first feed with its entries, newest first"
+  expect state entries.0 .id == "a3"
+  expect state entries.2 .id == "a1"
+  expect tree has "entry-a1"
+  expect state unread == 3
+
+test "choosing another feed lists its entries and asks the source once"
+  perf
+    tap "feed-beta"
+    clock data
+  expect perf query entries == 1
+  expect state entries.0 .id == "b2"
+  expect tree missing "entry-a1"
+  expect tree has "entry-b1"
+
+test "the chosen feed is still chosen after a relaunch"
+  tap "feed-beta"
+  clock data
+  reload
+  expect state selectedFeed == "beta"
+  expect state entries.0 .id == "b2"
+
+test "opening an entry marks it read, and it stays read after a relaunch"
+  tap "entry-a1"
+  clock settle
+  clock data
+  expect text "detail-title-reader" == "Alpha one"
+  expect state unread == 2
+  reload
+  expect state unread == 2
+
+test "an entry whose guid is a URL opens, is marked read, and can be starred"
+  tap "feed-delta"
+  clock data
+  expect state unread == 2
+  tap "Delta one"
+  clock settle
+  clock data
+  expect state unread == 1
+  tap "star-reader"
+  clock data
+  expect state starred.0 .feedId == "delta"
+  expect state entries.1 .starred == true
+
+test "a starred entry is listed under Starred and stays starred after a relaunch"
+  tap "entry-a2"
+  clock settle
+  tap "star-reader"
+  clock data
+  reload
+  expect state starred.0 .id == "a2"
+  tap "tab-starred"
+  expect tree has "starred-a2"
+
+test "unstarring from the Starred tab clears the star on the reader's list too"
+  tap "entry-a2"
+  clock settle
+  tap "star-reader"
+  clock data
+  tap "tab-starred"
+  tap "starred-a2"
+  clock settle
+  tap "star-starred"
+  clock data
+  expect state starred == []
+  expect state entries.1 .starred == false
+
+test "starring asks both lists again and leaves the feed list alone"
+  tap "entry-a2"
+  clock settle
+  perf
+    tap "star-reader"
+    clock data
+  expect perf query entries == 1
+  expect perf query starred == 1
+  expect perf query feeds == 0
+
+test "the reader tab keeps its open entry while the Starred tab is in use"
+  tap "entry-a1"
+  clock settle
+  tap "tab-starred"
+  expect state nav.tab == "starred"
+  tap "tab-reader"
+  expect tree has "detail-title-reader"
+
+test "a feed that fails says so, and retrying asks its source again"
+  clock data
+  fail fetch "https://zenn.dev"
+  tap "feed-zenn"
+  clock data
+  expect tree has "retry"
+  expect tree missing "entry-a1"
+  perf
+    tap "retry"
+    clock data
+  expect perf query entries == 1
+  expect tree has "retry"
+
+test "choosing a working feed after a failure lists its entries again"
+  clock data
+  fail fetch "https://zenn.dev"
+  tap "feed-zenn"
+  clock data
+  expect tree has "retry"
+  tap "feed-alpha"
+  clock data
+  expect tree missing "retry"
+  expect tree has "entry-a1"
+
+test "an address with no feed is refused with a reason, and the sheet stays open"
+  tap "add-feed"
+  clock settle
+  type "add-feed-url" "https://example.com/nowhere.xml"
+  tap "add-feed-save"
+  clock data
+  expect text "add-feed-error" == "No feed was found at that address."
+  expect tree has "add-feed-url"
+
+test "an address with no feed is refused with a reason, and a real one becomes a feed to read"
+  tap "add-feed"
+  clock settle
+  type "add-feed-url" "https://example.com/nowhere.xml"
+  tap "add-feed-save"
+  clock data
+  expect text "add-feed-error" == "No feed was found at that address."
+  type "add-feed-url" "https://example.com/gamma.xml"
+  tap "add-feed-save"
+  clock data
+  clock settle
+  expect tree has "feed-gamma"
+  tap "feed-gamma"
+  clock data
+  expect state entries.0 .id == "g1"
+
+after "pickFeed" "choosing a feed changes only the chosen feed"
+  only writes selectedFeed
+
+after "pickTab" "switching tabs changes only the navigation"
+  only writes nav
+
+after "openAdd" "opening the add sheet resets the draft and navigates, and nothing else"
+  only writes draftUrl nav refusal
+
+after "cancelAdd" "cancelling the add sheet changes only the navigation"
+  only writes nav
+
+after "editUrl" "typing an address changes only the draft"
+  only writes draftUrl
+
+after "saveFeed" "saving a feed changes only the navigation, the refusal, and the reply"
+  only writes nav refusal subscribed
